@@ -58,7 +58,7 @@
 			if(n < 0){
 				return n + ""
 			}
-			let fillLength = length - (Math.log10(n) + 1)
+			let fillLength = length - parseInt(Math.log10(n) + 1)
 			let zeros = fillLength > 0 ? zero.repeat(fillLength) : "" 
 			return zeros + n
 		}
