@@ -97,9 +97,9 @@
 			isResting = toRest
 			if(toRest) {
 				notify("休憩時間です")
+				iteration += 1
 			} else {
 				notify("仕事の時間です")
-				iteration += 1
 			}
 			
 			updateTimerByCurrentStatus()
