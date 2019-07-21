@@ -1,0 +1,153 @@
+<html>
+<body>
+
+		<div class="active">
+				<button id="resetButton">リセット</button>
+				<button id="startOrPauseButton">スタート</button>
+				<div id="info"></div>
+				<div>イテレーション:<input id="iteration" type="number" value="0"></div>
+				<div>残り時間: <span id="restTime">00:00</span></div>
+		</div>
+	
+	<script>
+		let resetButton = document.querySelector("#resetButton")
+		let startOrPauseButton = document.querySelector("#startOrPauseButton")
+		let restTimeView = document.querySelector("#restTime")
+		let infoView = document.querySelector("#info")
+		let iterationView = document.querySelector("#iteration")
+		let intervalMinutesList = [5, 10, 15, 20, 25, 30, 35, 40] 
+		let waitMinutes = 5
+		let iteration = 0
+		let isPausing = false
+		let isResting = false
+		let restTime = 0
+		let baseTime = new Date()
+		let destTime = new Date()
+		resetButton.addEventListener("click", function(e) {
+			reset()
+			updateView()
+		})
+
+		startOrPauseButton.addEventListener("click", function(e) {
+			let toPause = !isPausing
+			isPausing = toPause
+			if(!toPause) {
+				// 再開する(restTimeから終了時間を再計算)
+				baseTime = new Date()
+				destTime = new Date(baseTime.getTime() + restTime)				
+			}
+			updateView()
+		})
+
+		iterationView.addEventListener("change", function(e){
+			// 途中から始めたいときのためにイテレーション変更できるようにしておく(ポーズ中だけ)
+			if(e.target.readOnly) { return }
+			iteration = parseInt(e.target.value)
+			isResting = false
+			updateView()
+		})
+
+		// ----
+
+		function zeroFill(n, length) {
+			let zero = "0"
+			n = parseInt(n)
+			if(n == 0) {
+				return zero.repeat(length)
+			}
+			if(n < 0){
+				return n + ""
+			}
+			let fillLength = length - (Math.log10(n) + 1)
+			let zeros = fillLength > 0 ? zero.repeat(fillLength) : "" 
+			return zeros + n
+		}
+		function updateView() {
+			startOrPauseButton.textContent = isPausing ? "スタート" : "ポーズ"
+			infoView.innerHTML =(isPausing ? "(ポーズ中)" : "")
+				+  "現在時刻: " + now 
+				+ "<br>\n"
+				+ (isResting ? "<font color='red'>"+waitMinutes+"分休憩タイムです。</font>" : "<font color='green'>仕事の時間です。</font>" ) + "<br>\n"
+			restTimeView.textContent =  zeroFill(restTime / 1000 / 60 , 2) + ":" + zeroFill((restTime / 1000) % 60, 2)
+
+			if(isPausing) {
+				iterationView.readOnly = false
+			} else {
+				iterationView.readOnly = true
+				iterationView.value = iteration
+			}
+		}
+		function reset() {
+			iteration = 0
+			isPausing = true
+			isResting = false
+			updateTimerByCurrentStatus()
+		}
+
+		function tick() {
+			if(isPausing) { return }
+			restTime = Math.max(0, destTime.getTime() - now.getTime())
+			if(restTime > 0) {
+				return
+			}
+			// 時間がきた
+			let toRest = !isResting
+			isResting = toRest
+			if(toRest) {
+				notify("休憩時間です")
+			} else {
+				notify("仕事の時間です")
+				iteration += 1
+			}
+			
+			updateTimerByCurrentStatus()
+		}
+
+		function updateTimerByCurrentStatus() {
+			baseTime = new Date()
+			if(isResting) {
+				// 休憩中にする
+				restTime = waitMinutes * 60 * 1000
+			} else {
+				// アクティブにする
+				restTime = intervalMinutesList[Math.min(intervalMinutesList.length - 1, iteration)] * 60 * 1000
+			}
+			destTime = new Date(baseTime.getTime() + restTime)
+		}
+
+		function notify(message) {
+			console.log(message)
+			// const title = 'Push Codelab';
+			// const options = {
+			// 	body: 'Yay it works.' + message,
+			// 	icon: 'images/icon.png',
+			// 	badge: 'images/badge.png'
+			// };
+			// self.registration.showNotification(title, options);
+			new Notification(message);
+		}
+
+
+		function requirePermission() {
+			var permission = Notification.permission;
+			if (permission === "denied" || permission === "granted") {
+				return
+			}
+			Notification.requestPermission()
+				.then(function() {
+					// var notification = new Notification("Hello, world!");
+			})
+		}
+		// ----
+		reset()
+		requirePermission()
+		setInterval(function(){
+			now = new Date()
+			tick()
+			updateView()
+		}, 100)
+
+	</script>
+</body>
+</html>
+
