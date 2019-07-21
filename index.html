@@ -42,7 +42,7 @@
 		iterationView.addEventListener("change", function(e){
 			// 途中から始めたいときのためにイテレーション変更できるようにしておく(ポーズ中だけ)
 			if(e.target.readOnly) { return }
-			iteration = max(0, parseInt(e.target.value))
+			iteration = Math.max(0, parseInt(e.target.value))
 			iterationView.textContent = iteration
 			isResting = false
 			updateTimerByCurrentStatus()
